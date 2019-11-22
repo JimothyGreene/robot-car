@@ -23,7 +23,7 @@ const int LSC = A4;
 const int LSL = A5;
 
 int switchPin = 7;
-int defaultSpeed = 250;
+int defaultSpeed = 150;
 
 // Sensor inputs
 int IRFin = 0;
