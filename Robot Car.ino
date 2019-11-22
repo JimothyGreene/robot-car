@@ -1,3 +1,5 @@
+//Pin Configurations
+
 const int AIN1 = 13;
 const int AIN2 = 12;
 const int PWMA = 11;
@@ -8,7 +10,6 @@ int switchPin = 7;
 int motorSpeed = 0;
 
 void setup() {
-  // put your setup code here, to run once:
 pinMode(switchPin, INPUT_PULLUP);
 
 pinMode(AIN1, OUTPUT);
@@ -24,7 +25,6 @@ Serial.println("Enter motor speed (0-255)... ");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
 if (Serial.available() > 0){
   motorSpeed = Serial.parseInt();
   Serial.read();
@@ -32,7 +32,7 @@ if (Serial.available() > 0){
   Serial.println(motorSpeed);
 }
 
-if(digitalRead(7) == LOW){
+if(digitalRead(switchPin) == LOW){      // switchPin is on (outputting LOW)
   spinMotor(motorSpeed);
 }else{
   spinMotor(0);
