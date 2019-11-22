@@ -32,11 +32,11 @@ if (Serial.available() > 0){
   Serial.println(motorSpeed);
 }
 
-if(digitalRead(switchPin) == LOW){      // switchPin is on (outputting LOW)
+if(digitalRead(switchPin) == LOW) {      // switchPin is on (outputting LOW)
   spinMotor(motorSpeed);
-}else{
+} else {
   spinMotor(0);
-}
+  }
 }
 
 void spinMotor(int motorSpeed)
