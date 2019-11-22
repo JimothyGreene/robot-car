@@ -1,5 +1,5 @@
-//Pin Configurations
-
+// Pin Configurations
+// Right motor = A; Left motor = B
 const int AIN1 = 13;
 const int AIN2 = 12;
 const int PWMA = 11;
@@ -28,25 +28,50 @@ void loop() {
     }
 }
 
-void spinMotor(int motorSpeed) {
-    if (motorSpeed > 0) {
-        digitalWrite(AIN1, LOW);
-        digitalWrite(AIN2, HIGH);   
+void forward(int motorSpeed) {
+    digitalWrite(AIN1, LOW);
+    digitalWrite(AIN2, HIGH);
+    digitalWrite(BIN1, HIGH);
+    digitalWrite(BIN2, LOW);
+
+    analogWrite(PWMA, abs(motorSpeed));
+    analogWrite(PWMB, abs(motorSpeed));
+}
+
+void reverse(int motorSpeed) {
+    digitalWrite(AIN1, HIGH);
+    digitalWrite(AIN2, LOW);
+    digitalWrite(BIN1, LOW);
+    digitalWrite(BIN2, HIGH);
+
+    analogWrite(PWMA, abs(motorSpeed));
+    analogWrite(PWMB, abs(motorSpeed));
+}
+
+void stop() {
+    digitalWrite(AIN1, LOW);
+    digitalWrite(AIN2, LOW);
+    digitalWrite(BIN1, LOW);
+    digitalWrite(BIN2, LOW);
+
+    analogWrite(PWMA, abs(motorSpeed));
+    analogWrite(PWMB, abs(motorSpeed));
+}
+
+void turn(char direction, int motorSpeed) {
+    if(char == 'r') {
+        digitalWrite(AIN1, HIGH);
+        digitalWrite(AIN2, LOW);
         digitalWrite(BIN1, HIGH);
         digitalWrite(BIN2, LOW);
     }
-    else if (motorSpeed < 0) {
-        digitalWrite(AIN1, HIGH);
-        digitalWrite(AIN2, LOW);
+    else if(char == 'l') {
+        digitalWrite(AIN1, LOW);
+        digitalWrite(AIN2, HIGH);
         digitalWrite(BIN1, LOW);
         digitalWrite(BIN2, HIGH);
     }
-    else {
-        digitalWrite(AIN1, LOW);
-        digitalWrite(AIN2, LOW);
-        digitalWrite(BIN1, LOW);
-        digitalWrite(BIN2, LOW);
-    }
+
     analogWrite(PWMA, abs(motorSpeed));
     analogWrite(PWMB, abs(motorSpeed));
 }
