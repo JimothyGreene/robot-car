@@ -5,7 +5,7 @@ const int AIN2 = 12;
 const int PWMA = 11;
 const int BIN1 = 10;
 const int BIN2 = 9;
-const int PWMB = 8; 
+const int PWMB = 8;
 
 /* IR Sensors
  * Higher number = closer to obstacle (20cm = 272, 40cm = 145, 60cm = 116, 80cm = 104) roughly
@@ -18,19 +18,29 @@ const int IRL = A2;
 /* Line Sensors
  * 
  */
-const int LSR = A3;
+const int LSL = A3;
 const int LSC = A4;
-const int LSL = A5;
+const int LSR = A5;
 
 int switchPin = 7;
-int defaultSpeed = 150;
+int maxSpeed = 250;
+int defaultSpeed = 175;
+int rightSpeed = 215;
+int leftSpeed = 150;
+int turnSpeed = 150;
+int lineThreshold = 750;
 
-// Sensor inputs
+// Sensor inputs init
 int IRFin = 0;
 int IRRin = 0;
 int IRLin = 0;
+int LSCin = 0;
+int LSRin = 0;
+int LSLin = 0;
 
 void setup() {
+
+    Serial.begin(9600);
     pinMode(switchPin, INPUT_PULLUP);
 
     pinMode(AIN1, OUTPUT);
@@ -42,50 +52,94 @@ void setup() {
 }
 
 void loop() {
-
     if(digitalRead(switchPin) == LOW) {
-        // Taking inputs
-        IRFin = analogRead(IRF);
-        IRRin = analogRead(IRR);
-        IRLin = analogRead(IRL);
-
-        // IR Sensor turn logic
-        forward(defaultSpeed);
-        if(IRRin - IRLin > 10) {
-            turn('l', defaultSpeed/2);
-        }
-        else if(IRRin - IRLin < -10) {
-            turn('r', defaultSpeed/2);
-        }
-        else if(IRF > 300) {
-            reverse(defaultSpeed);
-        } else {
-            delay(50);
-            forward(defaultSpeed);
-        }
+        //line_follow();
+        //forward(defaultSpeed);
+        //testDance(defaultSpeed);
+        wall_follow();
     } else {
         stop();
     }
+    //wall_follow()
 }
 
-void forward(int motorSpeed) {
+void line_follow() {
+    // Taking inputs
+    LSCin = analogRead(LSC);
+    LSRin = analogRead(LSR);
+    LSLin = analogRead(LSL);
+
+    // Line sensor turn logic
+//        Serial.println(LSCin);
+//        Serial.println(LSRin);
+//        Serial.println(LSLin);
+//        delay(1000);
+    forward(leftSpeed, rightSpeed);
+    delay(50);
+    if(LSCin > lineThreshold && LSRin < lineThreshold && LSLin < lineThreshold) {   // Only middle sensor senses
+        forward(leftSpeed, rightSpeed);
+    }
+    else if(LSRin > lineThreshold && LSLin < lineThreshold) {  // Right senses
+        turn('r', turnSpeed);
+    }
+    else if(LSRin < lineThreshold && LSLin > lineThreshold) {  // Left senses
+        turn('l', turnSpeed);
+    }
+    else if(LSCin > lineThreshold && LSRin > lineThreshold && LSLin > lineThreshold) {  // All sense
+        stop();
+    }
+    else if(LSCin > lineThreshold && LSRin > lineThreshold && LSLin < lineThreshold) {  // Sense right sharp turn
+        turn('r', maxSpeed);
+    }
+    else if(LSCin > lineThreshold && LSRin < lineThreshold && LSLin > lineThreshold) {  // Sense left sharp turn
+        turn('l', maxSpeed);
+    } else {
+        forward(leftSpeed, rightSpeed);
+    }
+    delay(50);
+}
+
+void wall_follow() {
+    // Taking inputs
+    IRFin = analogRead(IRF);
+    IRRin = analogRead(IRR);
+    IRLin = analogRead(IRL);
+    Serial.println(IRFin);
+
+    // IR Sensor turn logic
+    forward(leftSpeed, rightSpeed);
+    if(IRRin - IRLin > 20) {
+        turn('l', turnSpeed);
+    }
+    else if(IRRin - IRLin < -20) {
+        turn('r', turnSpeed);
+    }
+    else if(IRF > 300) {
+        reverse(leftSpeed, rightSpeed);
+    } else {
+        forward(leftSpeed, rightSpeed);
+    }
+    delay(100);
+}    
+
+void forward(int leftMotorSpeed, int rightMotorSpeed) {
     digitalWrite(AIN1, LOW);
     digitalWrite(AIN2, HIGH);
     digitalWrite(BIN1, HIGH);
     digitalWrite(BIN2, LOW);
 
-    analogWrite(PWMA, abs(motorSpeed));
-    analogWrite(PWMB, abs(motorSpeed));
+    analogWrite(PWMA, abs(leftMotorSpeed));
+    analogWrite(PWMB, abs(rightMotorSpeed));
 }
 
-void reverse(int motorSpeed) {
+void reverse(int leftMotorSpeed, int rightMotorSpeed) {
     digitalWrite(AIN1, HIGH);
     digitalWrite(AIN2, LOW);
     digitalWrite(BIN1, LOW);
     digitalWrite(BIN2, HIGH);
 
-    analogWrite(PWMA, abs(motorSpeed));
-    analogWrite(PWMB, abs(motorSpeed));
+    analogWrite(PWMA, abs(leftMotorSpeed));
+    analogWrite(PWMB, abs(rightMotorSpeed));
 }
 
 void stop() {
@@ -117,11 +171,11 @@ void turn(char direction, int motorSpeed) {
 }
 
 void testDance(int motorSpeed) {
-    forward(motorSpeed);
+    //forward(motorSpeed);
     delay(500);
     stop();
     delay(500);
-    reverse(motorSpeed);
+    reverse(leftSpeed, rightSpeed);
     delay(500);
     turn('r', motorSpeed);
     delay(500);
