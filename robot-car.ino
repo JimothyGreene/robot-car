@@ -24,13 +24,18 @@ const int LSR = A5;
 
 int switchPin = 7;
 int maxSpeed = 255;
-int lowSpeed = 150;
-int defaultSpeed = 150;
+int lowSpeed = 130;
+int defaultSpeed = 130;
 int turnSpeed = 140;
-int lineThreshold = 600;
-int frontThreshold = 600;
+int lineThreshold = 650;
+int whiteThreshold = 400;
+int blackThreshold = 700;
+int frontThreshold = 650;
+int redLow = 500;
+int redHigh = 500;
 int nextCount = 0;
 int accelCount = 0;
+bool endGame = false;
 
 // Sensor inputs init
 int IRFin = 0;
@@ -53,17 +58,19 @@ void setup() {
 }
 
 void loop() {
-    if(digitalRead(switchPin) == LOW) {
-        if(nextCount > 20) {
+    // Serial.println(analogRead(LSC));
+    // Serial.println(analogRead(LSR));
+    // Serial.println(analogRead(LSL));
+    Serial.println(accelCount);
+    if(digitalRead(switchPin) == LOW && !endGame) {
+        if(nextCount > 10) {
             wall_follow();
         } else {
             line_follow();
         }
-        Serial.println(nextCount);
     } else {
         stop();
     }
-    //wall_follow()
 }
 
 void line_follow() {
@@ -73,38 +80,52 @@ void line_follow() {
     LSLin = analogRead(LSL);
     IRFin = analogRead(IRF);
 
+    if(accelCount > 0) {
+        defaultSpeed = 200;
+    } else {
+        defaultSpeed = lowSpeed;
+    }
     // Line sensor turn logic (black is high)
     forward(defaultSpeed);
     if(LSCin > lineThreshold && LSRin < lineThreshold && LSLin < lineThreshold) {   // Only middle sensor senses
         forward(defaultSpeed);
+        nextCount = 0;
     }
     else if(LSCin < lineThreshold && LSRin < lineThreshold && LSLin < lineThreshold) {
         nextCount++;
     }
     else if(IRFin > frontThreshold) {
         uturn();
+        nextCount = 0;
+        accelCount = 0;
     }
-    else if(LSC < lineThreshold && LSRin < lineThreshold && LSLin > lineThreshold) {  // left senses
-        turn('l', turnSpeed);
+    else if(LSRin < lineThreshold && LSLin > lineThreshold) {  // left senses
+        turn('l', turnSpeed+10);
+        nextCount = 0;
     }
-    else if(LSC < lineThreshold && LSRin > lineThreshold && LSLin < lineThreshold) {  // right senses
+    else if(LSRin > lineThreshold && LSLin < lineThreshold) {  // right senses
         turn('r', turnSpeed);
+        nextCount = 0;
     }
     else if(LSCin > lineThreshold && LSRin > lineThreshold && LSLin > lineThreshold) {  // All sense
         turn('r', turnSpeed);
+        nextCount = 0;
         delay(50);
     }
     else if(LSCin > lineThreshold && LSRin < lineThreshold && LSLin > lineThreshold) {  // Sense left sharp turn
         turn('l', maxSpeed);
+        nextCount = 0;
         delay(50);
     }
     else if(LSCin > lineThreshold && LSRin > lineThreshold && LSLin < lineThreshold) {  // Sense right sharp turn
         turn('r', maxSpeed);
+        accelCount++;
+        nextCount = 0;
         delay(50);
     } else {
-        forward(defaultSpeed);
+        nextCount = 0;
     }
-    delay(50);
+    delay(25);
 }
 
 void wall_follow() {
@@ -112,22 +133,30 @@ void wall_follow() {
     IRFin = analogRead(IRF);
     IRRin = analogRead(IRR);
     IRLin = analogRead(IRL);
+    LSCin = analogRead(LSC);
+    LSRin = analogRead(LSR);
+    LSLin = analogRead(LSL);
 
     // IR Sensor turn logic
-    forward(defaultSpeed);
-    if(IRRin - IRLin > 30) {
-        turn('l', turnSpeed);
-        delay(25);
+    if(LSCin > redLow) {
+        if(LSRin > redLow) {
+            if(LSLin > redLow) {
+                forward(defaultSpeed);
+                delay(100);
+                endGame = true;
+            }
+        }
     }
-    else if(IRRin - IRLin < -30) {
+    forward(defaultSpeed);
+    if(IRRin - IRLin > 40) {
+        turn('l', turnSpeed);
+    }
+    else if(IRRin - IRLin < -40) {
         turn('r', turnSpeed);
-        delay(25);
     } else {
-        forward(defaultSpeed);
-        delay(25);
     }
     delay(25);
-}    
+}  
 
 void forward(int motorSpeed) {
     digitalWrite(AIN1, LOW);
@@ -178,8 +207,8 @@ void turn(char direction, int motorSpeed) {
 }
 
 void uturn() {
-    turn('r', 230);
-    delay(300);
+    turn('r', 180);
+    delay(100);
     LSCin = analogRead(LSC);
     while(LSCin < lineThreshold) {
         LSCin = analogRead(LSC);
