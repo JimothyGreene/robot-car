@@ -46,7 +46,6 @@ int LSRin = 0;
 int LSLin = 0;
 
 void setup() {
-    Serial.begin(9600);
     pinMode(switchPin, INPUT_PULLUP);
 
     pinMode(AIN1, OUTPUT);
@@ -58,10 +57,6 @@ void setup() {
 }
 
 void loop() {
-    // Serial.println(analogRead(LSC));
-    // Serial.println(analogRead(LSR));
-    // Serial.println(analogRead(LSL));
-    Serial.println(accelCount);
     if(digitalRead(switchPin) == LOW && !endGame) {
         if(nextCount > 10) {
             wall_follow();
